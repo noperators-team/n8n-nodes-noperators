@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-noperators",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "N8N community node for the Noperators browser automation platform",
   "keywords": [
     "n8n-community-node-package",

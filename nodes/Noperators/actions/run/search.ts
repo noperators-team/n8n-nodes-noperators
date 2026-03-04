@@ -31,9 +31,10 @@ export async function searchRuns(
 		const status = run.status || 'unknown';
 		const date = run.created_at ? new Date(run.created_at).toLocaleString() : '';
 		const duration = run.duration_ms ? `${(run.duration_ms / 1000).toFixed(1)}s` : '';
+		const legend = run.legend ? ` "${run.legend}"` : '';
 
 		return {
-			name: `Run #${run.id} — ${status}${duration ? ` (${duration})` : ''}`,
+			name: `Run #${run.id}${legend} - ${status}${duration ? ` (${duration})` : ''}`,
 			value: String(run.id),
 			description: date,
 		};
