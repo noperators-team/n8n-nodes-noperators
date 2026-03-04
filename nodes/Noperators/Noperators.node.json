@@ -1,0 +1,21 @@
+{
+	"node": "n8n-nodes-base.noperators",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": [
+		"Development",
+		"Data & Storage"
+	],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://noperators.com/"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://noperators.com/"
+			}
+		]
+	}
+}
