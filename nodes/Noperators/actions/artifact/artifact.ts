@@ -1,6 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties, IDataObject } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { noperatorsApiRequest, noperatorsApiRequestBinary } from '../../utils';
+import { noperatorsApiRequest, noperatorsApiRequestBinary, newResourceLocator, getResourceId } from '../../utils';
 
 export const artifactOperations: INodeProperties[] = [
 	{
@@ -38,33 +38,20 @@ export const artifactOperations: INodeProperties[] = [
 ];
 
 export const artifactParameters: INodeProperties[] = [
-	{
-		displayName: 'Flow Identifier',
+	newResourceLocator({
+		displayName: 'Flow',
 		name: 'flowIdentifier',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'e.g. flow_id, ULID, or classifier',
-		description: 'The flow ID, ULID, or classifier',
-		displayOptions: {
-			show: {
-				resource: ['artifact'],
-			},
-		},
-	},
-	{
-		displayName: 'Run ID',
+		label: 'flow',
+		searchListMethod: 'searchFlows',
+		show: { resource: ['artifact'] },
+	}),
+	newResourceLocator({
+		displayName: 'Run',
 		name: 'runId',
-		type: 'number',
-		required: true,
-		default: 0,
-		description: 'The ID of the run',
-		displayOptions: {
-			show: {
-				resource: ['artifact'],
-			},
-		},
-	},
+		label: 'run',
+		searchListMethod: 'searchRuns',
+		show: { resource: ['artifact'] },
+	}),
 	{
 		displayName: 'Artifact Type',
 		name: 'artifactType',
@@ -134,8 +121,8 @@ async function listArtifacts(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
-	const runId = this.getNodeParameter('runId', itemIndex, 0) as number;
+	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
+	const runId = getResourceId(this.getNodeParameter('runId', itemIndex, ''));
 	const artifactType = this.getNodeParameter('artifactType', itemIndex, 'screenshots') as string;
 
 	const response = await noperatorsApiRequest.call(
@@ -158,8 +145,8 @@ async function downloadRecording(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
-	const runId = this.getNodeParameter('runId', itemIndex, 0) as number;
+	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
+	const runId = getResourceId(this.getNodeParameter('runId', itemIndex, ''));
 	const binaryProperty = this.getNodeParameter('binaryProperty', itemIndex, 'data') as string;
 
 	const response = await noperatorsApiRequestBinary.call(
@@ -184,8 +171,8 @@ async function downloadArtifact(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
-	const runId = this.getNodeParameter('runId', itemIndex, 0) as number;
+	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
+	const runId = getResourceId(this.getNodeParameter('runId', itemIndex, ''));
 	const artifactType = this.getNodeParameter('artifactType', itemIndex, 'screenshots') as string;
 	const filename = this.getNodeParameter('filename', itemIndex, '') as string;
 	const binaryProperty = this.getNodeParameter('binaryProperty', itemIndex, 'data') as string;

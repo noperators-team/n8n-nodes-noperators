@@ -1,6 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties, IDataObject } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { noperatorsApiRequest } from '../../utils';
+import { noperatorsApiRequest, newResourceLocator, getResourceId } from '../../utils';
 
 export const runOperations: INodeProperties[] = [
 	{
@@ -38,34 +38,20 @@ export const runOperations: INodeProperties[] = [
 ];
 
 export const runParameters: INodeProperties[] = [
-	{
-		displayName: 'Flow Identifier',
+	newResourceLocator({
+		displayName: 'Flow',
 		name: 'flowIdentifier',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'e.g. flow_id, ULID, or classifier',
-		description: 'The flow ID, ULID, or classifier',
-		displayOptions: {
-			show: {
-				resource: ['run'],
-			},
-		},
-	},
-	{
-		displayName: 'Run ID',
+		label: 'flow',
+		searchListMethod: 'searchFlows',
+		show: { resource: ['run'] },
+	}),
+	newResourceLocator({
+		displayName: 'Run',
 		name: 'runId',
-		type: 'number',
-		required: true,
-		default: 0,
-		description: 'The ID of the run',
-		displayOptions: {
-			show: {
-				resource: ['run'],
-				operation: ['get', 'getResult'],
-			},
-		},
-	},
+		label: 'run',
+		searchListMethod: 'searchRuns',
+		show: { resource: ['run'], operation: ['get', 'getResult'] },
+	}),
 	{
 		displayName: 'Status Filter',
 		name: 'status',
@@ -183,8 +169,8 @@ async function getRun(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
-	const runId = this.getNodeParameter('runId', itemIndex, 0) as number;
+	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
+	const runId = getResourceId(this.getNodeParameter('runId', itemIndex, ''));
 	const logs = this.getNodeParameter('logs', itemIndex, false) as boolean;
 	const code = this.getNodeParameter('code', itemIndex, false) as boolean;
 	const secrets = this.getNodeParameter('secrets', itemIndex, false) as boolean;
@@ -209,7 +195,7 @@ async function getManyRuns(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
+	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
 	const status = this.getNodeParameter('status', itemIndex, '') as string;
 	const perPage = this.getNodeParameter('perPage', itemIndex, 20) as number;
 	const page = this.getNodeParameter('page', itemIndex, 1) as number;
@@ -242,8 +228,8 @@ async function getRunResult(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
-	const runId = this.getNodeParameter('runId', itemIndex, 0) as number;
+	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
+	const runId = getResourceId(this.getNodeParameter('runId', itemIndex, ''));
 	const secrets = this.getNodeParameter('secrets', itemIndex, false) as boolean;
 
 	const qs: Record<string, string | number> = {};

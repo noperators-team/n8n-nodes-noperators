@@ -1,6 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties, IDataObject } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { noperatorsApiRequest } from '../../utils';
+import { noperatorsApiRequest, newResourceLocator, getResourceId } from '../../utils';
 
 export const flowOperations: INodeProperties[] = [
 	{
@@ -26,21 +26,13 @@ export const flowOperations: INodeProperties[] = [
 ];
 
 export const flowParameters: INodeProperties[] = [
-	{
-		displayName: 'Flow Identifier',
+	newResourceLocator({
+		displayName: 'Flow',
 		name: 'flowIdentifier',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'e.g. flow_id, ULID, or classifier',
-		description: 'The flow ID, ULID, or classifier',
-		displayOptions: {
-			show: {
-				resource: ['flow'],
-				operation: ['trigger'],
-			},
-		},
-	},
+		label: 'flow',
+		searchListMethod: 'searchFlows',
+		show: { resource: ['flow'], operation: ['trigger'] },
+	}),
 	{
 		displayName: 'Input (JSON)',
 		name: 'inputJson',
@@ -72,7 +64,7 @@ async function triggerFlow(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
+	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
 	const inputJsonRaw = this.getNodeParameter('inputJson', itemIndex, '{}') as string | object;
 
 	let body: object = {};

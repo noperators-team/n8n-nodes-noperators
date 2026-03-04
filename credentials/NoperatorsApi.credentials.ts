@@ -49,7 +49,7 @@ export class NoperatorsApi implements ICredentialType {
 		request: {
 			method: 'GET',
 			baseURL: '={{$credentials?.instanceUrl}}',
-			url: '/api/v1/flows/test/runs',
+			url: '/api/v1/flows',
 			ignoreHttpStatusErrors: true,
 			skipSslCertificateValidation: true
 		},

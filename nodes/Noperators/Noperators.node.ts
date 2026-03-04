@@ -7,7 +7,9 @@ import type {
 import { NodeOperationError } from 'n8n-workflow';
 
 import { flowOperations, flowParameters, executeFlowOperation } from './actions/flow/flow';
+import { searchFlows } from './actions/flow/search';
 import { runOperations, runParameters, executeRunOperation } from './actions/run/run';
+import { searchRuns } from './actions/run/search';
 import { artifactOperations, artifactParameters, executeArtifactOperation } from './actions/artifact/artifact';
 
 export class Noperators implements INodeType {
@@ -60,6 +62,13 @@ export class Noperators implements INodeType {
 			...runParameters,
 			...artifactParameters,
 		],
+	};
+
+	methods = {
+		listSearch: {
+			searchFlows,
+			searchRuns,
+		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
