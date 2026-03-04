@@ -9,7 +9,7 @@ import {
 export class NoperatorsApi implements ICredentialType {
 	name = 'noperatorsApi';
 	displayName = 'Noperators API';
-	icon: Icon = { light: 'file:noperators.png', dark: 'file:noperators.png' };
+	icon: Icon = { light: 'file:noperators.svg', dark: 'file:noperators.svg' };
 	documentationUrl = 'https://noperators.com/';
 	properties: INodeProperties[] = [
 		{

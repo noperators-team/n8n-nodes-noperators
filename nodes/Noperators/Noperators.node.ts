@@ -15,7 +15,7 @@ export class Noperators implements INodeType {
 		displayName: 'Noperators',
 		name: 'noperators',
 		// eslint-disable-next-line n8n-nodes-base/node-class-description-icon-not-svg
-		icon: 'file:noperators.png',
+		icon: 'file:noperators.svg',
 		group: ['output'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
