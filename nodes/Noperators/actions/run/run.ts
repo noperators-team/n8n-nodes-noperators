@@ -120,6 +120,45 @@ export const runParameters: INodeProperties[] = [
 			},
 		},
 	},
+	{
+		displayName: 'Include Logs',
+		name: 'logs',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to include console_logs in the response',
+		displayOptions: {
+			show: {
+				resource: ['run'],
+				operation: ['get', 'getMany'],
+			},
+		},
+	},
+	{
+		displayName: 'Include Code Snapshot',
+		name: 'code',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to include code_snapshot in the response',
+		displayOptions: {
+			show: {
+				resource: ['run'],
+				operation: ['get', 'getMany'],
+			},
+		},
+	},
+	{
+		displayName: 'Show Secrets',
+		name: 'secrets',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to show secret values in plain text instead of masking them',
+		displayOptions: {
+			show: {
+				resource: ['run'],
+				operation: ['get', 'getMany', 'getResult'],
+			},
+		},
+	},
 ];
 
 export async function executeRunOperation(
@@ -146,11 +185,21 @@ async function getRun(
 ): Promise<INodeExecutionData[]> {
 	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
 	const runId = this.getNodeParameter('runId', itemIndex, 0) as number;
+	const logs = this.getNodeParameter('logs', itemIndex, false) as boolean;
+	const code = this.getNodeParameter('code', itemIndex, false) as boolean;
+	const secrets = this.getNodeParameter('secrets', itemIndex, false) as boolean;
+
+	const qs: Record<string, string | number> = {};
+	if (logs) qs.logs = 1;
+	if (code) qs.code = 1;
+	if (secrets) qs.secrets = 1;
 
 	const response = await noperatorsApiRequest.call(
 		this,
 		'GET',
 		`/flows/${encodeURIComponent(identifier)}/runs/${runId}`,
+		undefined,
+		qs,
 	);
 
 	return [{ json: response as IDataObject, pairedItem: itemIndex }];
@@ -164,15 +213,19 @@ async function getManyRuns(
 	const status = this.getNodeParameter('status', itemIndex, '') as string;
 	const perPage = this.getNodeParameter('perPage', itemIndex, 20) as number;
 	const page = this.getNodeParameter('page', itemIndex, 1) as number;
+	const logs = this.getNodeParameter('logs', itemIndex, false) as boolean;
+	const code = this.getNodeParameter('code', itemIndex, false) as boolean;
+	const secrets = this.getNodeParameter('secrets', itemIndex, false) as boolean;
 
 	const qs: Record<string, string | number> = {
 		per_page: perPage,
 		page,
 	};
 
-	if (status) {
-		qs.status = status;
-	}
+	if (status) qs.status = status;
+	if (logs) qs.logs = 1;
+	if (code) qs.code = 1;
+	if (secrets) qs.secrets = 1;
 
 	const response = await noperatorsApiRequest.call(
 		this,
@@ -191,11 +244,17 @@ async function getRunResult(
 ): Promise<INodeExecutionData[]> {
 	const identifier = this.getNodeParameter('flowIdentifier', itemIndex, '') as string;
 	const runId = this.getNodeParameter('runId', itemIndex, 0) as number;
+	const secrets = this.getNodeParameter('secrets', itemIndex, false) as boolean;
+
+	const qs: Record<string, string | number> = {};
+	if (secrets) qs.secrets = 1;
 
 	const response = await noperatorsApiRequest.call(
 		this,
 		'GET',
 		`/flows/${encodeURIComponent(identifier)}/runs/${runId}/result`,
+		undefined,
+		qs,
 	);
 
 	return [{ json: response as IDataObject, pairedItem: itemIndex }];

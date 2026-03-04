@@ -12,6 +12,8 @@ export interface Run {
 	output: Record<string, unknown> | null;
 	error_message: string | null;
 	duration_ms: number | null;
+	console_logs: Record<string, unknown>[] | null;
+	code_snapshot: string | null;
 	created_at: string;
 	updated_at: string;
 }
