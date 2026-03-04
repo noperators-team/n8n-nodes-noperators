@@ -74,11 +74,11 @@ export const runParameters: INodeProperties[] = [
 		description: 'Filter runs by status',
 		options: [
 			{ name: 'All', value: '' },
-			{ name: 'Pending', value: 'pending' },
-			{ name: 'Running', value: 'running' },
 			{ name: 'Completed', value: 'completed' },
 			{ name: 'Failed', value: 'failed' },
 			{ name: 'Killed', value: 'killed' },
+			{ name: 'Pending', value: 'pending' },
+			{ name: 'Running', value: 'running' },
 		],
 		displayOptions: {
 			show: {

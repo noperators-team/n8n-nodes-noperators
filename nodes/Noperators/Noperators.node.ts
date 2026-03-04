@@ -14,6 +14,7 @@ export class Noperators implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Noperators',
 		name: 'noperators',
+		// eslint-disable-next-line n8n-nodes-base/node-class-description-icon-not-svg
 		icon: 'file:noperators.png',
 		group: ['output'],
 		version: 1,
