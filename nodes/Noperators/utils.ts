@@ -71,7 +71,6 @@ export async function noperatorsApiRequest(
 	path: string,
 	body?: object,
 	qs?: Record<string, string | number>,
-	extra?: { timeout?: number },
 ): Promise<unknown> {
 	const credentials = await this.getCredentials('noperatorsApi') as {
 		instanceUrl?: string;
@@ -104,10 +103,6 @@ export async function noperatorsApiRequest(
 
 	if (body && Object.keys(body).length > 0) {
 		options.body = body;
-	}
-
-	if (extra?.timeout !== undefined) {
-		options.timeout = extra.timeout;
 	}
 
 	return this.helpers.httpRequestWithAuthentication.call(
