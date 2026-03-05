@@ -34,11 +34,24 @@ export const flowParameters: INodeProperties[] = [
 		show: { resource: ['flow'], operation: ['trigger'] },
 	}),
 	{
+		displayName: 'Pass Input Item as Data',
+		name: 'passInputItem',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to send the whole incoming JSON item as the flow input. When enabled, the JSON field below acts as additional data merged on top.',
+		displayOptions: {
+			show: {
+				resource: ['flow'],
+				operation: ['trigger'],
+			},
+		},
+	},
+	{
 		displayName: 'Input (JSON)',
 		name: 'inputJson',
 		type: 'json',
 		default: '{}',
-		description: 'Optional JSON input to pass to the flow',
+		description: 'JSON input to pass to the flow. When "Pass Input Item as Data" is enabled, this is merged on top of the incoming item.',
 		displayOptions: {
 			show: {
 				resource: ['flow'],
@@ -65,17 +78,26 @@ async function triggerFlow(
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
 	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
+	const passInputItem = this.getNodeParameter('passInputItem', itemIndex, false) as boolean;
 	const inputJsonRaw = this.getNodeParameter('inputJson', itemIndex, '{}') as string | object;
 
-	let body: object = {};
+	let extra: Record<string, unknown> = {};
 	if (typeof inputJsonRaw === 'string') {
 		try {
-			body = JSON.parse(inputJsonRaw || '{}');
+			extra = JSON.parse(inputJsonRaw || '{}');
 		} catch {
 			throw new NodeOperationError(this.getNode(), 'Invalid JSON in Input field');
 		}
 	} else if (typeof inputJsonRaw === 'object' && inputJsonRaw !== null) {
-		body = inputJsonRaw;
+		extra = inputJsonRaw as Record<string, unknown>;
+	}
+
+	let body: object;
+	if (passInputItem) {
+		const inputItem = this.getInputData()?.[itemIndex]?.json ?? {};
+		body = { ...inputItem, ...extra };
+	} else {
+		body = extra;
 	}
 
 	const response = await noperatorsApiRequest.call(
