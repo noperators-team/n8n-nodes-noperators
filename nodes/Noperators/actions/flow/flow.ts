@@ -2,6 +2,8 @@ import type { IExecuteFunctions, INodeExecutionData, INodeProperties, IDataObjec
 import { NodeOperationError } from 'n8n-workflow';
 import { noperatorsApiRequest, newResourceLocator, getResourceId } from '../../utils';
 
+const TERMINAL_STATUSES = ['success', 'error', 'cancelled'];
+
 export const flowOperations: INodeProperties[] = [
 	{
 		displayName: 'Operation',
@@ -23,8 +25,14 @@ export const flowOperations: INodeProperties[] = [
 			{
 				name: 'Trigger & Wait',
 				value: 'triggerSync',
-				description: 'Trigger a flow and wait for it to complete before continuing',
+				description: 'Trigger a flow and wait for it to complete (server-side wait)',
 				action: 'Trigger a flow and wait',
+			},
+			{
+				name: 'Trigger & Poll',
+				value: 'triggerPoll',
+				description: 'Trigger a flow and poll until it completes (client-side polling)',
+				action: 'Trigger a flow and poll',
 			},
 		],
 		default: 'trigger',
@@ -37,7 +45,7 @@ export const flowParameters: INodeProperties[] = [
 		name: 'flowIdentifier',
 		label: 'flow',
 		searchListMethod: 'searchFlows',
-		show: { resource: ['flow'], operation: ['trigger', 'triggerSync'] },
+		show: { resource: ['flow'], operation: ['trigger', 'triggerSync', 'triggerPoll'] },
 	}),
 	{
 		displayName: 'Pass Input Item as Data',
@@ -48,7 +56,7 @@ export const flowParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['flow'],
-				operation: ['trigger', 'triggerSync'],
+				operation: ['trigger', 'triggerSync', 'triggerPoll'],
 			},
 		},
 	},
@@ -61,7 +69,7 @@ export const flowParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['flow'],
-				operation: ['trigger', 'triggerSync'],
+				operation: ['trigger', 'triggerSync', 'triggerPoll'],
 			},
 		},
 	},
@@ -80,6 +88,21 @@ export const flowParameters: INodeProperties[] = [
 			},
 		},
 	},
+	{
+		displayName: 'Polling Interval (Seconds)',
+		name: 'pollInterval',
+		type: 'number',
+		default: 5,
+		required: true,
+		typeOptions: { minValue: 1 },
+		description: 'How often to check if the run has completed',
+		displayOptions: {
+			show: {
+				resource: ['flow'],
+				operation: ['triggerPoll'],
+			},
+		},
+	},
 ];
 
 export async function executeFlowOperation(
@@ -93,6 +116,9 @@ export async function executeFlowOperation(
 	}
 	if (operation === 'triggerSync') {
 		return triggerFlowSync.call(this, itemIndex);
+	}
+	if (operation === 'triggerPoll') {
+		return triggerFlowPoll.call(this, itemIndex);
 	}
 	throw new NodeOperationError(this.getNode(), `Unsupported operation: ${operation}`);
 }
@@ -120,6 +146,10 @@ function buildBody(
 		return { ...inputItem, ...extra };
 	}
 	return extra;
+}
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function triggerFlow(
@@ -157,4 +187,37 @@ async function triggerFlowSync(
 	);
 
 	return [{ json: response as IDataObject, pairedItem: itemIndex }];
+}
+
+async function triggerFlowPoll(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData[]> {
+	const identifier = getResourceId(this.getNodeParameter('flowIdentifier', itemIndex, ''));
+	const pollInterval = this.getNodeParameter('pollInterval', itemIndex, 5) as number;
+	const body = buildBody(this, itemIndex);
+
+	const triggerResponse = await noperatorsApiRequest.call(
+		this,
+		'POST',
+		`/flows/${encodeURIComponent(identifier)}/trigger/async`,
+		body,
+	) as { run_id: number; status: string };
+
+	const runId = triggerResponse.run_id;
+	const basePath = `/flows/${encodeURIComponent(identifier)}/runs/${runId}`;
+
+	let run = triggerResponse as Record<string, unknown>;
+
+	while (!TERMINAL_STATUSES.includes(run.status as string)) {
+		await sleep(pollInterval * 1000);
+
+		run = await noperatorsApiRequest.call(
+			this,
+			'GET',
+			basePath,
+		) as Record<string, unknown>;
+	}
+
+	return [{ json: run as IDataObject, pairedItem: itemIndex }];
 }
