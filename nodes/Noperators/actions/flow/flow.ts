@@ -47,7 +47,7 @@ export const flowParameters: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Input (JSON)',
+		displayName: 'Additional JSON input data',
 		name: 'inputJson',
 		type: 'json',
 		default: '{}',
