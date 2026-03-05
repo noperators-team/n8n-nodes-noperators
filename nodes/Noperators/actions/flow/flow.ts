@@ -66,7 +66,7 @@ export const flowParameters: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Timeout (seconds)',
+		displayName: 'Timeout (Seconds)',
 		name: 'timeout',
 		type: 'number',
 		default: 300,
