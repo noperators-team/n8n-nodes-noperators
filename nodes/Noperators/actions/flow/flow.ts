@@ -1,4 +1,4 @@
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties, IDataObject } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties, IDataObject, ResourceMapperValue } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { noperatorsApiRequest, newResourceLocator, getResourceId } from '../../utils';
 
@@ -55,11 +55,42 @@ export const flowParameters: INodeProperties[] = [
 		},
 	},
 	{
+		displayName: 'Flow Input Fields',
+		name: 'flowInputFields',
+		type: 'resourceMapper',
+		noDataExpression: true,
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		typeOptions: {
+			loadOptionsDependsOn: ['flowIdentifier.value'],
+			resourceMapper: {
+				resourceMapperMethod: 'getFlowInputFields',
+				mode: 'add',
+				fieldWords: {
+					singular: 'input field',
+					plural: 'input fields',
+				},
+				addAllFields: true,
+				supportAutoMap: true,
+				multiKeyMatch: false,
+			},
+		},
+		displayOptions: {
+			show: {
+				resource: ['flow'],
+				operation: ['trigger', 'triggerPoll'],
+			},
+		},
+		description: 'Fields from the flow\'s default inputs. Fill in values to override them when triggering.',
+	},
+	{
 		displayName: 'Additional JSON Input Data',
 		name: 'inputJson',
 		type: 'json',
 		default: '{}',
-		description: 'JSON input to pass to the flow. When "Pass Input Item as Data" is enabled, this is merged on top of the incoming item.',
+		description: 'JSON input to pass to the flow. When "Pass Input Item as Data" is enabled, this is merged on top of the incoming item. Merged after Flow Input Fields.',
 		displayOptions: {
 			show: {
 				resource: ['flow'],
@@ -103,6 +134,20 @@ function buildBody(ctx: IExecuteFunctions, itemIndex: number): object {
 	const passInputItem = ctx.getNodeParameter('passInputItem', itemIndex, false) as boolean;
 	const inputJsonRaw = ctx.getNodeParameter('inputJson', itemIndex, '{}') as string | object;
 
+	let mappedValues: Record<string, unknown> = {};
+	try {
+		const mapped = ctx.getNodeParameter('flowInputFields', itemIndex, {}) as Partial<ResourceMapperValue>;
+		if (mapped?.value && typeof mapped.value === 'object') {
+			for (const [k, v] of Object.entries(mapped.value)) {
+				if (v !== null && v !== undefined && v !== '') {
+					mappedValues[k] = v;
+				}
+			}
+		}
+	} catch {
+		// field not available yet (no flow selected)
+	}
+
 	let extra: Record<string, unknown> = {};
 	if (typeof inputJsonRaw === 'string') {
 		try {
@@ -116,9 +161,9 @@ function buildBody(ctx: IExecuteFunctions, itemIndex: number): object {
 
 	if (passInputItem) {
 		const inputItem = ctx.getInputData()?.[itemIndex]?.json ?? {};
-		return { ...inputItem, ...extra };
+		return { ...inputItem, ...mappedValues, ...extra };
 	}
-	return extra;
+	return { ...mappedValues, ...extra };
 }
 
 function sleep(ms: number): Promise<void> {
